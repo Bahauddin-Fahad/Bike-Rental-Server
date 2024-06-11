@@ -1,4 +1,8 @@
+/* eslint-disable no-unused-vars */
+import { Model } from 'mongoose';
 import { USER_ROLE } from './user.constant';
+
+export type TUserRole = keyof typeof USER_ROLE;
 
 export interface TUser {
   id: string;
@@ -7,7 +11,8 @@ export interface TUser {
   password: string;
   phone: string;
   address: string;
-  role: 'user' | 'admin';
+  role: TUserRole;
 }
-
-export type TUserRole = keyof typeof USER_ROLE;
+export interface UserModel extends Model<TUser> {
+  doesUserExist(id: string): Promise<TUser>;
+}
