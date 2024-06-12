@@ -6,9 +6,14 @@ import { UserValidations } from '../user/user.validation';
 const router = express.Router();
 
 router.post(
-  '/signup ',
-  validateRequest(UserValidations.createUserValidationSchema),
+  '/signup',
+  validateRequest(UserValidations.signupValidationSchema),
   AuthControllers.signupUser,
+);
+router.post(
+  '/login',
+  validateRequest(UserValidations.loginValidationSchema),
+  AuthControllers.loginUser,
 );
 
 export const AuthRoutes = router;
