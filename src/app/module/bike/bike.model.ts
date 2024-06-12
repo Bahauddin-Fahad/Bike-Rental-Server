@@ -20,7 +20,7 @@ const bikeSchema = new Schema(
       default: true,
     },
     cc: {
-      type: String,
+      type: Number,
       required: [true, 'cc is Required'],
     },
     year: {
@@ -36,7 +36,7 @@ const bikeSchema = new Schema(
       required: [true, 'Bike Brand is Required'],
     },
   },
-  { timestamps: true },
+  { versionKey: false },
 );
 
 export const ModelBike = model<TBike>('Bike', bikeSchema);

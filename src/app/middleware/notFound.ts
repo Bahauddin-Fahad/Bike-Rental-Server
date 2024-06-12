@@ -6,9 +6,9 @@ import httpStatus from 'http-status-codes';
 
 const notFound = (req: Request, res: Response, next: NextFunction) => {
   return res.status(httpStatus.NOT_FOUND).json({
-    status: false,
-    message: 'API Not found',
-    error: '',
+    success: false,
+    statusCode: 404,
+    message: 'Not Found',
   });
 };
 

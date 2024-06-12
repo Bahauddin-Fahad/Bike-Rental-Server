@@ -8,7 +8,7 @@ export const createBikeValidationSchema = z.object({
       .number()
       .positive({ message: 'Price per Hour must be positive' }),
     isAvailable: z.boolean().optional(),
-    cc: z.string().min(1, 'Bike cc is required'),
+    cc: z.number().min(1, 'Bike cc is required'),
     year: z.number().positive({ message: 'Year must be positive' }),
     model: z.string().trim().min(1, 'Bike Model is required'),
     brand: z.string().trim().min(1, 'Bike Brand is required'),

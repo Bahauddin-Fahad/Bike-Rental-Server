@@ -15,18 +15,7 @@ const signupUserToRental = async (payload: TUser) => {
   }
   const result = await ModelUser.create(payload);
 
-  // create token and sent to the  client
-  const jwtPayload = {
-    email: payload.email,
-    role: payload.role,
-  };
-  const accessToken = createToken(
-    jwtPayload,
-    config.jwt_access_secret as string,
-    config.jwt_access_expires_in as string,
-  );
-
-  return { result, accessToken };
+  return result;
 };
 
 const loginUserToRental = async (payload: TUser) => {

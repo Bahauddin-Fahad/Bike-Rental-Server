@@ -4,7 +4,7 @@ import { AuthServices } from './auth.service';
 import { sendResponse } from '../../utils/sendResponse';
 
 const signupUser = catchAsync(async (req, res) => {
-  const { result } = await AuthServices.signupUserToRental(req.body);
+  const result = await AuthServices.signupUserToRental(req.body);
 
   sendResponse(res, {
     success: true,
@@ -13,6 +13,7 @@ const signupUser = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 const loginUser = catchAsync(async (req, res) => {
   const { user, accessToken } = await AuthServices.loginUserToRental(req.body);
 
