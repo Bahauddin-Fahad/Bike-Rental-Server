@@ -120,8 +120,14 @@ const returnBikeRentalIntoDB = async (rentalId: string) => {
     throw new Error(err);
   }
 };
+const getMyRentalsFromDB = async (userId: string) => {
+  const rentalData = await ModelBooking.find({ userId });
+
+  return rentalData;
+};
 
 export const BookingServices = {
   createRentalIntoDB,
   returnBikeRentalIntoDB,
+  getMyRentalsFromDB,
 };

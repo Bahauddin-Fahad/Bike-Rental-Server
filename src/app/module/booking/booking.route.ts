@@ -5,7 +5,10 @@ import auth from '../../middleware/auth';
 
 const router = express.Router();
 
-router.route('/').post(auth('user', 'admin'), BookingControllers.createRental);
+router
+  .route('/')
+  .post(auth('user', 'admin'), BookingControllers.createRental)
+  .get(auth('user', 'admin'), BookingControllers.getMyRentals);
 
 router
   .route('/:id/return')

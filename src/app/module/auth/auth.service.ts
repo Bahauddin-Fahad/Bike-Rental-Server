@@ -33,9 +33,11 @@ const loginUserToRental = async (payload: TUser) => {
 
   // create token and sent to the  client
   const jwtPayload = {
+    id: user._id,
     email: payload.email,
     role: user.role,
   };
+
   const accessToken = createToken(
     jwtPayload,
     config.jwt_access_secret as string,

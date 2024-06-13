@@ -32,8 +32,29 @@ const returnBikeRental = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const getMyRentals = catchAsync(async (req, res) => {
+  const user = req.user;
+
+  const result = await BookingServices.getMyRentalsFromDB(user?.id);
+  if (result.length <= 0) {
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: 'No Data Found',
+      data: result,
+    });
+  } else {
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: 'Rentals retrieved successfully',
+      data: result,
+    });
+  }
+});
 
 export const BookingControllers = {
   createRental,
   returnBikeRental,
+  getMyRentals,
 };
