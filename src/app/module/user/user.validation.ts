@@ -13,6 +13,7 @@ const signupValidationSchema = z.object({
     role: z.enum(['user', 'admin']),
   }),
 });
+
 const loginValidationSchema = z.object({
   body: z.object({
     name: z

@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { TErrorResponse, TErrorSources } from '../interface/error';
+import { TErrorResponse, TErrorMessages } from '../interface/error';
 
 const handleDuplicateError = (error: any): TErrorResponse => {
   const statusCode = 400;
 
   const match = error.message.match(/"([^"]*)"/);
   const extractedValue = match && match[1];
-  const errorSources: TErrorSources = [
+  const errorMessages: TErrorMessages = [
     {
       path: '',
       message: `${extractedValue} already exists`,
@@ -17,7 +17,7 @@ const handleDuplicateError = (error: any): TErrorResponse => {
   return {
     statusCode,
     message: 'Duplicate error',
-    errorSources,
+    errorMessages,
   };
 };
 export default handleDuplicateError;
