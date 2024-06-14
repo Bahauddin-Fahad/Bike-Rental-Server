@@ -37,20 +37,19 @@ const getMyRentals = catchAsync(async (req, res) => {
 
   const result = await BookingServices.getMyRentalsFromDB(user?.id);
   if (result.length <= 0) {
-    sendResponse(res, {
+    return sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
       message: 'No Data Found',
       data: result,
     });
-  } else {
-    sendResponse(res, {
-      success: true,
-      statusCode: httpStatus.OK,
-      message: 'Rentals retrieved successfully',
-      data: result,
-    });
   }
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Rentals retrieved successfully',
+    data: result,
+  });
 });
 
 export const BookingControllers = {

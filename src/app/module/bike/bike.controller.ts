@@ -37,6 +37,14 @@ const updateBike = catchAsync(async (req, res) => {
   const bikeData = req.body;
   const result = await BikeServices.updateBikeIntoDB(id, bikeData);
 
+  if (!result) {
+    return sendResponse(res, {
+      success: false,
+      statusCode: httpStatus.NOT_FOUND,
+      message: 'Bike Not Found',
+      data: result,
+    });
+  }
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -48,6 +56,15 @@ const deleteBike = catchAsync(async (req, res) => {
   const { id } = req.params;
 
   const result = await BikeServices.deleteBikefromDB(id);
+
+  if (!result) {
+    return sendResponse(res, {
+      success: false,
+      statusCode: httpStatus.NOT_FOUND,
+      message: 'Bike Not Found',
+      data: result,
+    });
+  }
 
   sendResponse(res, {
     success: true,

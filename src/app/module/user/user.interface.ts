@@ -5,7 +5,7 @@ import { USER_ROLE } from './user.constant';
 export type TUserRole = keyof typeof USER_ROLE;
 
 export interface TUser {
-  _id: Schema.Types.ObjectId;
+  _id?: Schema.Types.ObjectId;
   name: string;
   email: string;
   password: string;

@@ -8,7 +8,7 @@ const getProfilefromDB = async (email: string) => {
 const updateProfileInDB = async (email: string, payload: Partial<TUser>) => {
   const user = await ModelUser.findOneAndUpdate({ email }, payload, {
     new: true,
-  }).select('-password');
+  }).select('-password -__v -createdAt -updatedAt');
   return user;
 };
 

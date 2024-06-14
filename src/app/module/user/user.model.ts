@@ -5,7 +5,6 @@ import config from '../../config';
 
 const userSchema = new Schema<TUser, UserModel>(
   {
-    _id: { type: Schema.Types.ObjectId },
     name: {
       type: String,
       required: [true, 'Name is Required'],
@@ -18,7 +17,7 @@ const userSchema = new Schema<TUser, UserModel>(
       unique: true,
       trim: true,
     },
-    password: { type: String, required: true, select: 0 },
+    password: { type: String, required: true },
     phone: { type: String, required: [true, 'Phone is Required'] },
     address: {
       type: String,
@@ -27,12 +26,9 @@ const userSchema = new Schema<TUser, UserModel>(
     },
     role: { type: String, enum: ['user', 'admin'] },
   },
-  { timestamps: true, versionKey: false },
+  { timestamps: true },
 );
 
-userSchema.statics.doesUserExist = async function (email: string) {
-  return await ModelUser.findOne({ email }).select('+password');
-};
 userSchema.pre('save', async function (next) {
   // eslint-disable-next-line @typescript-eslint/no-this-alias
   const user = this;
@@ -42,15 +38,26 @@ userSchema.pre('save', async function (next) {
   );
   next();
 });
+
 userSchema.post('save', async function (doc, next) {
   doc.password = '';
   next();
 });
 
-userSchema.statics.isPasswordMatched = async function (
-  plainTextPassword,
-  hashedPassword,
-) {
-  return await bcrypt.compare(plainTextPassword, hashedPassword);
+userSchema.statics.doesUserExist = async function (email: string) {
+  return await ModelUser.findOne({ email }).select(
+    '-password -__v -createdAt -updatedAt',
+  );
 };
+
+userSchema.statics.isPasswordMatched = async function (
+  email: string,
+  givenPassword: string,
+) {
+  const user = await ModelUser.findOne({ email }).select('+password');
+  const hashedPassword = user?.password as string;
+
+  return await bcrypt.compare(givenPassword, hashedPassword);
+};
+
 export const ModelUser = model<TUser, UserModel>('User', userSchema);

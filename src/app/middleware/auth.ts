@@ -13,7 +13,11 @@ const auth = (...requiredRoles: TUserRole[]) => {
 
     // checking if the token is missing
     if (!token) {
-      throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized');
+      return res.send({
+        success: false,
+        statusCode: httpStatus.UNAUTHORIZED,
+        message: 'You are not authorized',
+      });
     }
 
     // checking if the given token is valid
@@ -24,7 +28,11 @@ const auth = (...requiredRoles: TUserRole[]) => {
 
     const { email, role } = decoded;
     if (requiredRoles && !requiredRoles.includes(role)) {
-      throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized');
+      return res.send({
+        success: false,
+        statusCode: httpStatus.UNAUTHORIZED,
+        message: 'You have no access to this route',
+      });
     }
 
     // checking if the user is exist

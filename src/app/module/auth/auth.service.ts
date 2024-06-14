@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import httpStatus from 'http-status-codes';
 import AppError from '../../errors/AppError';
 import { ModelUser } from '../user/user.model';
@@ -13,19 +15,24 @@ const signupUserToRental = async (payload: TUser) => {
       'User with this email already exists!',
     );
   }
+
   const result = await ModelUser.create(payload);
 
-  return result;
+  //removing password from user details by destructuring
+  const { password, ...userWithOutPassword } = result.toObject();
+  return userWithOutPassword;
 };
 
 const loginUserToRental = async (payload: TUser) => {
   const user = await ModelUser.doesUserExist(payload.email);
+  //removing password from user details by destructuring
+
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, "User doesn't exist!");
   }
   const passwordmatched = await ModelUser.isPasswordMatched(
+    payload.email,
     payload?.password,
-    user?.password,
   );
   if (!passwordmatched) {
     throw new AppError(httpStatus.FORBIDDEN, 'Password does not match');
