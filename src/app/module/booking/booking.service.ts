@@ -15,8 +15,33 @@ const createRentalIntoDB = async (
   try {
     session.startTransaction();
 
-    //checking if the bike is available for rental
+    //checking if start time exists in the body
+    if (payload.startTime) {
+      const startTime = new Date(payload.startTime).getTime();
+      const currentTime = new Date().getTime();
+
+      //checking if the start time is greater than the current time
+      if (startTime > currentTime) {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          "Start time can't be greater than Current time",
+        );
+      }
+    } else {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'You must provide a start time',
+      );
+    }
+
     const bikeDetails = await ModelBike.findById(payload.bikeId);
+
+    //checking if the bike exists
+    if (!bikeDetails) {
+      throw new AppError(httpStatus.NOT_FOUND, 'The Bike is not found');
+    }
+
+    //checking if the bike is available for rental
     if (!bikeDetails?.isAvailable) {
       throw new AppError(
         httpStatus.BAD_REQUEST,
@@ -122,7 +147,6 @@ const returnBikeRentalIntoDB = async (rentalId: string) => {
 };
 const getMyRentalsFromDB = async (userId: string) => {
   const rentalData = await ModelBooking.find({ userId });
-
   return rentalData;
 };
 
