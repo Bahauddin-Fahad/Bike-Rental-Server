@@ -32,7 +32,7 @@ const returnBikeRental = catchAsync(async (req, res) => {
 const getMyRentals = catchAsync(async (req, res) => {
   const user = req.user;
 
-  const result = await BookingServices.getMyRentalsFromDB(user?.id);
+  const result = await BookingServices.getMyRentalsFromDB(user?._id);
   if (result.length <= 0) {
     return sendResponse(res, {
       success: true,
