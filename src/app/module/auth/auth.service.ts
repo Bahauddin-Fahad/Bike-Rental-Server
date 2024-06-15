@@ -6,6 +6,7 @@ import { ModelUser } from '../user/user.model';
 import { TUser } from '../user/user.interface';
 import { createToken } from './auth.utils';
 import config from '../../config';
+import { ObjectId } from 'mongoose';
 
 const signupUserToRental = async (payload: TUser) => {
   const user = await ModelUser.doesUserExist(payload.email);
@@ -40,7 +41,7 @@ const loginUserToRental = async (payload: TUser) => {
 
   // create token and sent to the  client
   const jwtPayload = {
-    id: user._id,
+    _id: user._id as ObjectId,
     email: payload.email,
     role: user.role,
   };

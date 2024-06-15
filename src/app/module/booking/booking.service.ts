@@ -1,19 +1,33 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import mongoose from 'mongoose';
+import mongoose, { ObjectId } from 'mongoose';
 import { ModelUser } from '../user/user.model';
 import { TBooking } from './booking.interface';
 import { ModelBooking } from './booking.model';
 import { ModelBike } from '../bike/bike.model';
 import httpStatus from 'http-status-codes';
 import AppError from '../../errors/AppError';
+import { JwtPayload } from 'jsonwebtoken';
 
 const createRentalIntoDB = async (
-  email: string,
+  requestedUser: JwtPayload,
   payload: Partial<TBooking>,
 ) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
+
+    //checking if user already have a rental
+    const userId = requestedUser?._id as ObjectId;
+    const bookingsOfAUser = await ModelBooking.find({ userId });
+
+    bookingsOfAUser.map((booking) => {
+      if (booking.isReturned === false) {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          'You already have a rental ongoing',
+        );
+      }
+    });
 
     //checking if start time exists in the body
     if (payload.startTime) {
@@ -50,7 +64,7 @@ const createRentalIntoDB = async (
     }
 
     //creating the rental
-    const user = await ModelUser.findOne({ email });
+    const user = await ModelUser.findOne({ email: requestedUser.email });
     const bookingData = {
       userId: user?._id,
       bikeId: payload.bikeId,

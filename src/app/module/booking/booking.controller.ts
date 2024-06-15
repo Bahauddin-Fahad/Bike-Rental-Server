@@ -7,10 +7,7 @@ const createRental = catchAsync(async (req, res) => {
   const user = req.user;
   const bookingInfo = req.body;
 
-  const result = await BookingServices.createRentalIntoDB(
-    user?.email,
-    bookingInfo,
-  );
+  const result = await BookingServices.createRentalIntoDB(user, bookingInfo);
 
   sendResponse(res, {
     success: true,
