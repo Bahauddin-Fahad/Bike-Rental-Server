@@ -7,5 +7,6 @@ export const createBookingSchema = z.object({
     .number()
     .positive({ message: 'Total Cost must be positive' })
     .optional(),
-  isReturned: z.boolean().optional(),
+  // isReturned: z.boolean().optional(),
+  status: z.string(),
 });

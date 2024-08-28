@@ -14,5 +14,5 @@ router
     validateRequest(UserValidations.updateValidationSchema),
     UserControllers.updateUserProfile,
   );
-
+router.route('/').get(UserControllers.getAllUsers);
 export const UserRoutes = router;

@@ -10,7 +10,8 @@ const signupValidationSchema = z.object({
     password: z.string().min(1).max(20),
     phone: z.string().min(1, 'Phone is required'),
     address: z.string().min(1, 'Address is required'),
-    role: z.enum(['user', 'admin']),
+    image: z.string().optional(),
+    role: z.enum(['user', 'admin']).optional(),
   }),
 });
 
@@ -25,6 +26,7 @@ const loginValidationSchema = z.object({
     password: z.string().min(1).max(20),
     phone: z.string().min(1, 'Phone is required').optional(),
     address: z.string().min(1, 'Address is required').optional(),
+    image: z.string().optional(),
     role: z.enum(['user', 'admin']).optional(),
   }),
 });
@@ -43,6 +45,7 @@ const updateValidationSchema = z.object({
       .optional(),
     phone: z.string().min(1, 'Phone is required').optional(),
     address: z.string().min(1, 'Address is required').optional(),
+    image: z.string().optional(),
     role: z.enum(['user', 'admin']).optional(),
   }),
 });

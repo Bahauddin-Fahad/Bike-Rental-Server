@@ -7,6 +7,7 @@ import { ModelBike } from '../bike/bike.model';
 import httpStatus from 'http-status-codes';
 import AppError from '../../errors/AppError';
 import { JwtPayload } from 'jsonwebtoken';
+import { initiatePayment } from '../../utils/payment';
 
 const createRentalIntoDB = async (
   requestedUser: JwtPayload,
@@ -21,7 +22,7 @@ const createRentalIntoDB = async (
     const bookingsOfAUser = await ModelBooking.find({ userId });
 
     bookingsOfAUser.map((booking) => {
-      if (booking.isReturned === false) {
+      if (booking.status === 'booked') {
         throw new AppError(
           httpStatus.BAD_REQUEST,
           'You already have a rental ongoing',
@@ -35,10 +36,10 @@ const createRentalIntoDB = async (
       const currentTime = new Date().getTime();
 
       //checking if the start time is greater than the current time
-      if (startTime > currentTime) {
+      if (startTime < currentTime) {
         throw new AppError(
           httpStatus.BAD_REQUEST,
-          "Start time can't be greater than Current time",
+          "Start time can't be smaller than Current time",
         );
       }
     } else {
@@ -65,13 +66,15 @@ const createRentalIntoDB = async (
 
     //creating the rental
     const user = await ModelUser.findOne({ email: requestedUser.email });
+    const transactionId = `TXN-${Date.now()}`;
     const bookingData = {
       userId: user?._id,
       bikeId: payload.bikeId,
       startTime: payload.startTime,
       returnTime: null,
       totalCost: 0,
-      isReturned: false,
+      status: 'pending',
+      transactionId,
     };
 
     const bookedDetails = await ModelBooking.create(bookingData);
@@ -89,10 +92,21 @@ const createRentalIntoDB = async (
       throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create the rental');
     }
 
+    const paymentData = {
+      transactionId,
+      advancePay: 100,
+      customerName: user!.name,
+      customerEmail: user!.email,
+      customerPhone: user!.phone,
+      customerAddress: user!.address,
+    };
+
+    const paymentSession = await initiatePayment(paymentData);
+
     await session.commitTransaction();
     await session.endSession();
 
-    return bookedDetails;
+    return paymentSession;
   } catch (err: any) {
     await session.abortTransaction();
     await session.endSession();
@@ -114,7 +128,7 @@ const returnBikeRentalIntoDB = async (rentalId: string) => {
         'No Rental Data found with this ID',
       );
     }
-    if (rentalInfo.isReturned) {
+    if (rentalInfo.status === 'returned') {
       throw new AppError(
         httpStatus.BAD_REQUEST,
         'The Bike is already returned from this rent',
@@ -144,7 +158,7 @@ const returnBikeRentalIntoDB = async (rentalId: string) => {
       {
         returnTime: bookingReturnTime,
         totalCost: totalRentalCost,
-        isReturned: true,
+        status: 'paid',
       },
       { new: true },
     );
@@ -160,6 +174,8 @@ const returnBikeRentalIntoDB = async (rentalId: string) => {
   }
 };
 const getMyRentalsFromDB = async (userId: string) => {
+  console.log(userId);
+
   const rentalData = await ModelBooking.find({ userId });
   return rentalData;
 };

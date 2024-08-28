@@ -13,7 +13,7 @@ const auth = (...requiredRoles: TUserRole[]) => {
 
     // checking if the token is missing
     if (!token) {
-      return res.send({
+      return res.status(httpStatus.UNAUTHORIZED).send({
         success: false,
         statusCode: httpStatus.UNAUTHORIZED,
         message: 'You are not authorized',
@@ -28,7 +28,7 @@ const auth = (...requiredRoles: TUserRole[]) => {
 
     const { email, role } = decoded;
     if (requiredRoles && !requiredRoles.includes(role)) {
-      return res.send({
+      return res.status(httpStatus.UNAUTHORIZED).send({
         success: false,
         statusCode: httpStatus.UNAUTHORIZED,
         message: 'You have no access to this route',

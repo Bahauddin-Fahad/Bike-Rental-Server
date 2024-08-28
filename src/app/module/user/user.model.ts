@@ -24,7 +24,8 @@ const userSchema = new Schema<TUser, UserModel>(
       required: [true, 'Address is Required'],
       trim: true,
     },
-    role: { type: String, enum: ['user', 'admin'] },
+    image: { type: String },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
   },
   { timestamps: true },
 );

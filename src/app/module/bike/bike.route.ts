@@ -17,6 +17,7 @@ router
 
 router
   .route('/:id')
+  .get(BikeControllers.getSingleBike)
   .put(auth('admin'), BikeControllers.updateBike)
   .delete(auth('admin'), BikeControllers.deleteBike);
 
