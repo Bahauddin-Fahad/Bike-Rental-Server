@@ -35,11 +35,12 @@ class QueryBuilder<T> {
     ];
     excludeFields.forEach((field) => delete queryObj[field]);
 
+    this.modelQuery = this.modelQuery.find(queryObj as FilterQuery<T>);
     return this;
   }
   sort() {
     const sort =
-      (this?.query?.sort as string)?.split(',')?.join(' ') || 'price';
+      (this?.query?.sort as string)?.split(',')?.join(' ') || 'createdAt';
 
     this.modelQuery = this.modelQuery.sort(sort);
 
@@ -60,6 +61,10 @@ class QueryBuilder<T> {
 
     this.modelQuery = this.modelQuery.select(fields);
 
+    return this;
+  }
+  populate(populateFields: string | string[]) {
+    this.modelQuery = this.modelQuery.populate(populateFields);
     return this;
   }
   async countTotal() {

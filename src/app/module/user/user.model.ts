@@ -27,7 +27,7 @@ const userSchema = new Schema<TUser, UserModel>(
     image: { type: String },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
   },
-  { timestamps: true },
+  { timestamps: true, versionKey: false },
 );
 
 userSchema.pre('save', async function (next) {

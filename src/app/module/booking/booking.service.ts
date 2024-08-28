@@ -8,6 +8,7 @@ import httpStatus from 'http-status-codes';
 import AppError from '../../errors/AppError';
 import { JwtPayload } from 'jsonwebtoken';
 import { initiatePayment } from '../../utils/payment';
+import QueryBuilder from '../../builder/QueryBuilder';
 
 const createRentalIntoDB = async (
   requestedUser: JwtPayload,
@@ -19,7 +20,7 @@ const createRentalIntoDB = async (
 
     //checking if user already have a rental
     const userId = requestedUser?._id as ObjectId;
-    const bookingsOfAUser = await ModelBooking.find({ userId });
+    const bookingsOfAUser = await ModelBooking.find({ user: userId });
 
     bookingsOfAUser.map((booking) => {
       if (booking.status === 'booked') {
@@ -49,7 +50,7 @@ const createRentalIntoDB = async (
       );
     }
 
-    const bikeDetails = await ModelBike.findById(payload.bikeId);
+    const bikeDetails = await ModelBike.findById(payload.bike);
 
     //checking if the bike exists
     if (!bikeDetails) {
@@ -68,8 +69,8 @@ const createRentalIntoDB = async (
     const user = await ModelUser.findOne({ email: requestedUser.email });
     const transactionId = `TXN-${Date.now()}`;
     const bookingData = {
-      userId: user?._id,
-      bikeId: payload.bikeId,
+      user: user?._id,
+      bike: payload.bike,
       startTime: payload.startTime,
       returnTime: null,
       totalCost: 0,
@@ -84,7 +85,7 @@ const createRentalIntoDB = async (
 
     //updating the isAvailable value to false
     const updatedBikeDetails = await ModelBike.findByIdAndUpdate(
-      payload.bikeId,
+      payload.bike,
       { isAvailable: false },
       { new: true },
     );
@@ -137,7 +138,7 @@ const returnBikeRentalIntoDB = async (rentalId: string) => {
 
     //checking if the bike is available for rental and updating the availability
     const bikeDetails = await ModelBike.findByIdAndUpdate(
-      rentalInfo.bikeId,
+      rentalInfo.bike,
       { isAvailable: true },
       { new: true },
     );
@@ -173,10 +174,30 @@ const returnBikeRentalIntoDB = async (rentalId: string) => {
     throw new Error(err);
   }
 };
-const getMyRentalsFromDB = async (userId: string) => {
-  console.log(userId);
+const getMyRentalsFromDB = async (
+  userId: string,
+  query: Record<string, unknown>,
+) => {
+  const rentalQuery = new QueryBuilder(
+    ModelBooking.find({ user: userId })
+      .populate(
+        'user',
+        '-password -createdAt -updatedAt -address -phone -image -__v',
+      )
+      .populate('bike', ''),
+    query,
+  )
+    .filter()
+    .sort()
+    .paginate()
+    .filterFields();
+  const meta = await rentalQuery.countTotal();
+  const result = await rentalQuery.modelQuery;
 
-  const rentalData = await ModelBooking.find({ userId });
+  return { meta, result };
+};
+const getALLRentalsFromDB = async () => {
+  const rentalData = await ModelBooking.find();
   return rentalData;
 };
 
@@ -184,4 +205,5 @@ export const BookingServices = {
   createRentalIntoDB,
   returnBikeRentalIntoDB,
   getMyRentalsFromDB,
+  getALLRentalsFromDB,
 };

@@ -8,14 +8,7 @@ const createBikeIntoDB = async (payload: TBike) => {
   return result;
 };
 const getAllBikesFromDB = async (query: Record<string, unknown>) => {
-  let isAvailable;
-  if (query.isAvailable === 'true') {
-    isAvailable = true;
-  } else {
-    isAvailable = false;
-  }
-
-  const bikeQuery = new QueryBuilder(ModelBike.find({ isAvailable }), query)
+  const bikeQuery = new QueryBuilder(ModelBike.find(), query)
     .search(bikeSearchableFields)
     .filter()
     .sort()

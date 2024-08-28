@@ -3,14 +3,14 @@ import { TBooking } from './booking.interface';
 
 const bookingSchema = new Schema(
   {
-    userId: {
+    user: {
       type: Schema.Types.ObjectId,
-      ref: 'ModelUser',
+      ref: 'User',
       required: [true, 'User id is required'],
     },
-    bikeId: {
+    bike: {
       type: Schema.Types.ObjectId,
-      ref: 'ModelBike',
+      ref: 'Bike',
       required: [true, 'Bike id is required'],
     },
     startTime: { type: Date, required: [true, 'Start Time is Required'] },
@@ -28,7 +28,7 @@ const bookingSchema = new Schema(
     // advancePay: { type: Number, default: 100 },
     // isReturned: { type: Boolean, default: false },
   },
-  { versionKey: false },
+  { timestamps: true, versionKey: false },
 );
 
 export const ModelBooking = model<TBooking>('Booking', bookingSchema);

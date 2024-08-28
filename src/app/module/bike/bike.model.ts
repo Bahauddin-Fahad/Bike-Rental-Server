@@ -36,7 +36,7 @@ const bikeSchema = new Schema(
       required: [true, 'Bike Brand is Required'],
     },
   },
-  { versionKey: false },
+  { timestamps: true, versionKey: false },
 );
 
 export const ModelBike = model<TBike>('Bike', bikeSchema);
