@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import QueryBuilder from '../../builder/QueryBuilder';
 import { TUser } from './user.interface';
 import { ModelUser } from './user.model';
 
@@ -15,14 +16,37 @@ const updateProfileInDB = async (email: string, payload: Partial<TUser>) => {
 };
 
 const getAllUsersFromDB = async (query: any) => {
-  const result = query
-    ? await ModelUser.find(query).select('-password')
-    : await ModelUser.find().select('-password');
+  const usersQuery = new QueryBuilder(
+    ModelUser.find().select('-password'),
+    query,
+  )
+    .filter()
+    .sort()
+    .paginate()
+    .filterFields();
 
+  const meta = await usersQuery.countTotal();
+  const result = await usersQuery.modelQuery;
+
+  return { meta, result };
+};
+const updateUserRoleIntoDB = async (id: string, payload: Partial<TUser>) => {
+  const result = await ModelUser.findByIdAndUpdate(id, payload, {
+    new: true,
+  });
   return result;
 };
+const deleteUserFromDB = async (id: string, payload: Partial<TUser>) => {
+  const result = await ModelUser.findByIdAndUpdate(id, payload, {
+    new: true,
+  });
+  return result;
+};
+
 export const UserServices = {
   getProfilefromDB,
   updateProfileInDB,
   getAllUsersFromDB,
+  updateUserRoleIntoDB,
+  deleteUserFromDB,
 };

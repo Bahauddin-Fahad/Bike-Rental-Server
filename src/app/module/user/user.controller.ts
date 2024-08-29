@@ -32,7 +32,8 @@ const updateUserProfile: RequestHandler = catchAsync(async (req, res) => {
 
 const getAllUsers: RequestHandler = catchAsync(async (req, res) => {
   const result = await UserServices.getAllUsersFromDB(req.query);
-  if (result?.length <= 0) {
+
+  if (result?.result?.length <= 0) {
     return sendResponse(res, {
       success: false,
       statusCode: httpStatus.NOT_FOUND,
@@ -47,9 +48,34 @@ const getAllUsers: RequestHandler = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const updateUserRole = catchAsync(async (req, res) => {
+  const id = req.params.id;
 
+  const result = await UserServices.updateUserRoleIntoDB(id, req.body);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'User Role updated successfully',
+    data: result,
+  });
+});
+const deleteUser = catchAsync(async (req, res) => {
+  const id = req.params.id;
+
+  const result = await UserServices.deleteUserFromDB(id, req.body);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'User Deleted successfully',
+    data: result,
+  });
+});
 export const UserControllers = {
   getUserProfile,
   updateUserProfile,
   getAllUsers,
+  updateUserRole,
+  deleteUser,
 };

@@ -33,6 +33,7 @@ const getMyRentals = catchAsync(async (req, res) => {
   const user = req.user;
 
   const result = await BookingServices.getMyRentalsFromDB(user?._id, req.query);
+
   if (result?.result?.length <= 0) {
     return sendResponse(res, {
       success: true,

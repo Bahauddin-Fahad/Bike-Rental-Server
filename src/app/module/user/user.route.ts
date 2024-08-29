@@ -14,5 +14,15 @@ router
     validateRequest(UserValidations.updateValidationSchema),
     UserControllers.updateUserProfile,
   );
+router.patch(
+  '/:id',
+  validateRequest(UserValidations.updateValidationSchema),
+  UserControllers.updateUserRole,
+);
+router.delete(
+  '/:id',
+  validateRequest(UserValidations.updateValidationSchema),
+  UserControllers.deleteUser,
+);
 router.route('/').get(UserControllers.getAllUsers);
 export const UserRoutes = router;

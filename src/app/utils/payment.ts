@@ -4,8 +4,6 @@ import axios from 'axios';
 import config from '../config';
 
 export const initiatePayment = async (paymentData: any) => {
-  console.log('paymentData', paymentData);
-
   try {
     const response = await axios.post(config.payment_url!, {
       store_id: config.store_id,

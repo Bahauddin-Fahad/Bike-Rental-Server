@@ -13,6 +13,7 @@ export interface TUser {
   address: string;
   image: string;
   role: TUserRole;
+  isDeleted: boolean;
 }
 export interface UserModel extends Model<TUser> {
   doesUserExist(id: string): Promise<TUser>;
