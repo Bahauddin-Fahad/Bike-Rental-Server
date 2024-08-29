@@ -17,18 +17,42 @@ const createRental = catchAsync(async (req, res) => {
   });
 });
 
-const returnBikeRental = catchAsync(async (req, res) => {
-  const { id } = req.params;
+// const returnBikeRental = catchAsync(async (req, res) => {
+//   const { id } = req.params;
 
-  const result = await BookingServices.returnBikeRentalIntoDB(id);
+//   const result = await BookingServices.returnBikeRentalIntoDB(id);
+
+//   sendResponse(res, {
+//     success: true,
+//     statusCode: httpStatus.OK,
+//     message: 'Bike returned successfully',
+//     data: result,
+//   });
+// });
+
+const calculateTotalCost = catchAsync(async (req, res) => {
+  const id = req.params.id;
+  const result = await BookingServices.calculateTotalCostIntoDB(id, req.body);
 
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'Bike returned successfully',
+    message: 'Cost Calculated successfully',
     data: result,
   });
 });
+const payTotalCost = catchAsync(async (req, res) => {
+  const id = req.params.id;
+  const result = await BookingServices.payTotalCostIntoDB(id);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Cost Paid Successfully',
+    data: result,
+  });
+});
+
 const getMyRentals = catchAsync(async (req, res) => {
   const user = req.user;
 
@@ -50,8 +74,9 @@ const getMyRentals = catchAsync(async (req, res) => {
   });
 });
 const getAllRentals = catchAsync(async (req, res) => {
-  const result = await BookingServices.getALLRentalsFromDB();
-  if (result.length <= 0) {
+  const result = await BookingServices.getALLRentalsFromDB(req.query);
+
+  if (result.result?.length <= 0) {
     return sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
@@ -69,7 +94,9 @@ const getAllRentals = catchAsync(async (req, res) => {
 
 export const BookingControllers = {
   createRental,
-  returnBikeRental,
+  // returnBikeRental,
+  calculateTotalCost,
+  payTotalCost,
   getMyRentals,
   getAllRentals,
 };

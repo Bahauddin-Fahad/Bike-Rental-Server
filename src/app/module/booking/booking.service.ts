@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import mongoose, { ObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 import { ModelUser } from '../user/user.model';
 import { TBooking } from './booking.interface';
 import { ModelBooking } from './booking.model';
@@ -19,17 +19,17 @@ const createRentalIntoDB = async (
     session.startTransaction();
 
     //checking if user already have a rental
-    const userId = requestedUser?._id as ObjectId;
-    const bookingsOfAUser = await ModelBooking.find({ user: userId });
+    // const userId = requestedUser?._id as ObjectId;
+    // const bookingsOfAUser = await ModelBooking.find({ user: userId });
 
-    bookingsOfAUser.map((booking) => {
-      if (booking.status === 'booked') {
-        throw new AppError(
-          httpStatus.BAD_REQUEST,
-          'You already have a rental ongoing',
-        );
-      }
-    });
+    // bookingsOfAUser.map((booking) => {
+    //   if (booking.status === 'booked') {
+    //     throw new AppError(
+    //       httpStatus.BAD_REQUEST,
+    //       'You already have a rental ongoing',
+    //     );
+    //   }
+    // });
 
     //checking if start time exists in the body
     if (payload.startTime) {
@@ -68,6 +68,7 @@ const createRentalIntoDB = async (
     //creating the rental
     const user = await ModelUser.findOne({ email: requestedUser.email });
     const transactionId = `TXN-${Date.now()}`;
+
     const bookingData = {
       user: user?._id,
       bike: payload.bike,
@@ -115,13 +116,72 @@ const createRentalIntoDB = async (
   }
 };
 
-const returnBikeRentalIntoDB = async (rentalId: string) => {
+// const returnBikeRentalIntoDB = async (rentalId: string) => {
+//   const session = await mongoose.startSession();
+//   try {
+//     session.startTransaction();
+
+//     //getting rental data
+//     const rentalInfo = await ModelBooking.findById(rentalId);
+
+//     if (!rentalInfo) {
+//       throw new AppError(
+//         httpStatus.BAD_REQUEST,
+//         'No Rental Data found with this ID',
+//       );
+//     }
+//     if (rentalInfo.startTime) {
+//       const startTime = new Date(rentalInfo.startTime).getTime();
+//       const returnTime = new Date().getTime();
+
+//       //checking if the start time is greater than the current time
+//       if (startTime > returnTime) {
+//         throw new AppError(
+//           httpStatus.BAD_REQUEST,
+//           "Start time can't be larger than Return time",
+//         );
+//       }
+//     }
+
+//     if (rentalInfo.status === 'returned') {
+//       throw new AppError(
+//         httpStatus.BAD_REQUEST,
+//         'The Bike is already returned from this rent',
+//       );
+//     }
+
+//     const bookingReturnTime = new Date().getTime();
+
+//     //updating the rental return time
+//     const updatedRentalInfo = await ModelBooking.findByIdAndUpdate(
+//       rentalId,
+//       {
+//         returnTime: bookingReturnTime,
+//         status: 'returned',
+//       },
+//       { new: true },
+//     );
+
+//     await session.commitTransaction();
+//     await session.endSession();
+
+//     return updatedRentalInfo;
+//   } catch (err: any) {
+//     await session.abortTransaction();
+//     await session.endSession();
+//     throw new Error(err);
+//   }
+// };
+
+const calculateTotalCostIntoDB = async (
+  id: string,
+  payload: Partial<TBooking>,
+) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
-
     //getting rental data
-    const rentalInfo = await ModelBooking.findById(rentalId);
+    const rentalInfo = await ModelBooking.findById(id);
 
     if (!rentalInfo) {
       throw new AppError(
@@ -129,14 +189,20 @@ const returnBikeRentalIntoDB = async (rentalId: string) => {
         'No Rental Data found with this ID',
       );
     }
-    if (rentalInfo.status === 'returned') {
-      throw new AppError(
-        httpStatus.BAD_REQUEST,
-        'The Bike is already returned from this rent',
-      );
+    const bookingStartTime = rentalInfo?.startTime.getTime();
+    const bookingReturnTime = new Date(payload?.returnTime as Date).getTime();
+
+    if (bookingStartTime) {
+      //checking if the start time is greater than the current time
+      if (bookingStartTime > bookingReturnTime) {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          "Start time can't be larger than Return time",
+        );
+      }
     }
 
-    //checking if the bike is available for rental and updating the availability
+    // checking if the bike is available for rental and updating the availability
     const bikeDetails = await ModelBike.findByIdAndUpdate(
       rentalInfo.bike,
       { isAvailable: true },
@@ -146,20 +212,17 @@ const returnBikeRentalIntoDB = async (rentalId: string) => {
       throw new AppError(httpStatus.BAD_REQUEST, 'The Bike is not found');
     }
 
-    //calculating the rental cost
+    // calculating the rental cost
     const bikeRentalPrice = bikeDetails.pricePerHour;
-    const bookingStartTime = rentalInfo.startTime.getTime();
-    const bookingReturnTime = new Date().getTime();
     const totalHour = (bookingReturnTime - bookingStartTime) / (1000 * 3600);
-    const totalRentalCost = (bikeRentalPrice * totalHour).toFixed(0);
+    const totalRentalCost = Math.round(bikeRentalPrice * totalHour);
 
-    //updating the rental info
+    // updating the rental info
     const updatedRentalInfo = await ModelBooking.findByIdAndUpdate(
-      rentalId,
+      id,
       {
         returnTime: bookingReturnTime,
         totalCost: totalRentalCost,
-        status: 'paid',
       },
       { new: true },
     );
@@ -174,12 +237,70 @@ const returnBikeRentalIntoDB = async (rentalId: string) => {
     throw new Error(err);
   }
 };
+const payTotalCostIntoDB = async (rentalId: string) => {
+  const session = await mongoose.startSession();
+  try {
+    session.startTransaction();
+
+    //getting rental data
+    const rentalInfo = await ModelBooking.findById(rentalId);
+
+    if (!rentalInfo) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'No Rental Data found with this ID',
+      );
+    }
+
+    if (rentalInfo.status !== 'returned') {
+      throw new AppError(httpStatus.BAD_REQUEST, 'The Bike isnt returned yet');
+    }
+
+    // checking if the bike is available for rental and updating the availability
+    const bikeDetails = await ModelBike.findByIdAndUpdate(
+      rentalInfo.bike,
+      { isAvailable: true },
+      { new: true },
+    );
+    if (!bikeDetails) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'The Bike is not found');
+    }
+
+    // calculating the rental cost
+    const bikeRentalPrice = bikeDetails.pricePerHour;
+    const bookingStartTime = rentalInfo.startTime.getTime();
+    const bookingReturnTime = rentalInfo.returnTime.getTime();
+    const totalHour = (bookingReturnTime - bookingStartTime) / (1000 * 3600);
+    const totalRentalCost = Math.round(bikeRentalPrice * totalHour);
+
+    // updating the rental info
+    const updatedRentalInfo = await ModelBooking.findByIdAndUpdate(
+      rentalId,
+      {
+        totalCost: totalRentalCost,
+      },
+      { new: true },
+    );
+
+    await session.commitTransaction();
+    await session.endSession();
+
+    return updatedRentalInfo;
+  } catch (err: any) {
+    await session.abortTransaction();
+    await session.endSession();
+    throw new Error(err);
+  }
+};
+
 const getMyRentalsFromDB = async (
   userId: string,
   query: Record<string, unknown>,
 ) => {
   const rentalQuery = new QueryBuilder(
-    ModelBooking.find({ user: userId })
+    ModelBooking.find({
+      user: userId,
+    })
       .populate(
         'user',
         '-password -createdAt -updatedAt -address -phone -image -__v',
@@ -196,14 +317,31 @@ const getMyRentalsFromDB = async (
 
   return { meta, result };
 };
-const getALLRentalsFromDB = async () => {
-  const rentalData = await ModelBooking.find();
-  return rentalData;
+const getALLRentalsFromDB = async (query: Record<string, unknown>) => {
+  const rentalQuery = new QueryBuilder(
+    ModelBooking.find({})
+      .populate(
+        'user',
+        '-password -createdAt -updatedAt -address -phone -image -__v',
+      )
+      .populate('bike', ''),
+    query,
+  )
+    .filter()
+    .sort()
+    .paginate()
+    .filterFields();
+  const meta = await rentalQuery.countTotal();
+  const result = await rentalQuery.modelQuery;
+
+  return { meta, result };
 };
 
 export const BookingServices = {
   createRentalIntoDB,
-  returnBikeRentalIntoDB,
+  // returnBikeRentalIntoDB,
+  calculateTotalCostIntoDB,
+  payTotalCostIntoDB,
   getMyRentalsFromDB,
   getALLRentalsFromDB,
 };

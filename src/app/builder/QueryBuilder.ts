@@ -10,6 +10,7 @@ class QueryBuilder<T> {
   }
   search(searchableFields: string[]) {
     const searchTerm = this?.query?.searchTerm;
+
     if (searchTerm) {
       this.modelQuery = this.modelQuery.find({
         $or: searchableFields.map(
@@ -34,6 +35,11 @@ class QueryBuilder<T> {
       'fields',
     ];
     excludeFields.forEach((field) => delete queryObj[field]);
+
+    // if (queryObj.status === 'unpaid') {
+    //   queryObj.$or = [{ status: 'booked' }, { status: 'returned' }];
+    //   delete queryObj.status;
+    // }
 
     this.modelQuery = this.modelQuery.find(queryObj as FilterQuery<T>);
     return this;

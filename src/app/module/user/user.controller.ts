@@ -36,7 +36,7 @@ const getAllUsers: RequestHandler = catchAsync(async (req, res) => {
   if (result?.result?.length <= 0) {
     return sendResponse(res, {
       success: false,
-      statusCode: httpStatus.NOT_FOUND,
+      statusCode: httpStatus.OK,
       message: 'No Data Found',
       data: result,
     });

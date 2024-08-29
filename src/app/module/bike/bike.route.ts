@@ -18,7 +18,11 @@ router
 router
   .route('/:id')
   .get(BikeControllers.getSingleBike)
-  .put(auth('admin'), BikeControllers.updateBike)
+  .put(
+    auth('admin'),
+    validateRequest(BikeValidation.updateBikeValidationSchema),
+    BikeControllers.updateBike,
+  )
   .delete(auth('admin'), BikeControllers.deleteBike);
 
 export const BikeRoutes = router;

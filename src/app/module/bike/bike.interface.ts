@@ -1,10 +1,11 @@
 export interface TBike {
   name: string;
+  image: string;
   description: string;
   pricePerHour: number;
-  isAvailable: boolean;
+  brand: string;
+  model: string;
   cc: number;
   year: number;
-  model: string;
-  brand: string;
+  isAvailable: boolean;
 }

@@ -7,6 +7,10 @@ const bikeSchema = new Schema(
       type: String,
       required: [true, 'Bike Name is Required'],
     },
+    image: {
+      type: String,
+      required: [true, 'Image is Required'],
+    },
     description: {
       type: String,
       required: [true, 'Description is Required'],
@@ -15,9 +19,13 @@ const bikeSchema = new Schema(
       type: Number,
       required: [true, 'Price per Hour is Required'],
     },
-    isAvailable: {
-      type: Boolean,
-      default: true,
+    brand: {
+      type: String,
+      required: [true, 'Bike Brand is Required'],
+    },
+    model: {
+      type: String,
+      required: [true, 'Bike Model is Required'],
     },
     cc: {
       type: Number,
@@ -27,13 +35,10 @@ const bikeSchema = new Schema(
       type: Number,
       required: [true, 'Bike Year is Required'],
     },
-    model: {
-      type: String,
-      required: [true, 'Bike Model is Required'],
-    },
-    brand: {
-      type: String,
-      required: [true, 'Bike Brand is Required'],
+
+    isAvailable: {
+      type: Boolean,
+      default: true,
     },
   },
   { timestamps: true, versionKey: false },

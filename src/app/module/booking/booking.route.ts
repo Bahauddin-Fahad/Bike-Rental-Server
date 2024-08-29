@@ -14,8 +14,14 @@ router
   .route('/my-rentals')
   .get(auth('user', 'admin'), BookingControllers.getMyRentals);
 
+// router
+//   .route('/:id/return')
+//   .put(auth('user', 'admin'), BookingControllers.returnBikeRental);
 router
-  .route('/:id/return')
-  .put(auth('admin'), BookingControllers.returnBikeRental);
+  .route('/:id/calculate')
+  .put(auth('admin'), BookingControllers.calculateTotalCost);
+router
+  .route('/:id/pay')
+  .put(auth('user', 'admin'), BookingControllers.payTotalCost);
 
 export const BookingRoutes = router;
