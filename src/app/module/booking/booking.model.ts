@@ -16,17 +16,20 @@ const bookingSchema = new Schema(
     startTime: { type: Date, required: [true, 'Start Time is Required'] },
     returnTime: { type: Date },
     totalCost: { type: Number, required: [true, 'Total Cost is Required'] },
+    advancePaid: { type: Number },
     status: {
       type: String,
-      enum: ['pending', 'booked', 'returned', 'paid'],
+      enum: ['pending', 'booked', 'paid'],
       default: 'pending',
     },
-    transactionId: {
-      type: String,
-      default: '',
+    // transactionId: {
+    //   type: String,
+    //   default: '',
+    // },
+    transactionIds: {
+      type: [String], // Array of strings for transaction IDs
+      required: true,
     },
-    // advancePay: { type: Number, default: 100 },
-    // isReturned: { type: Boolean, default: false },
   },
   { timestamps: true, versionKey: false },
 );

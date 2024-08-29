@@ -8,7 +8,11 @@ import { readFileSync } from 'fs';
 import { ModelBooking } from '../booking/booking.model';
 import { verifyPayment } from '../../utils/payment';
 
-const confirmationService = async (transactionId: string, status: string) => {
+const confirmationService = async (
+  transactionId: string,
+  status: string,
+  paymentType: string,
+) => {
   const verifyResponse = await verifyPayment(transactionId);
 
   let result;
@@ -16,14 +20,14 @@ const confirmationService = async (transactionId: string, status: string) => {
 
   if (verifyResponse && verifyResponse.pay_status === 'Successful') {
     result = await ModelBooking.findOneAndUpdate(
-      { transactionId },
+      { transactionIds: { $in: [transactionId] } },
       {
-        status: 'booked',
+        status: paymentType === 'advance' ? 'booked' : 'paid',
       },
     );
-    message = 'Successfully Booked!';
+    message = `Successfully ${paymentType === 'advance' ? 'Booked' : 'Paid'}!`;
   } else {
-    message = 'Booking Failed!';
+    message = `Could not completed ${paymentType === 'advance' ? 'Booking' : 'Payment'}!`;
   }
 
   const filePath = join(__dirname, '../../../views/confirmation.html');

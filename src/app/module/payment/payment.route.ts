@@ -3,6 +3,10 @@ import { PaymentControllers } from './payment.controller';
 
 const router = Router();
 
-router.post('/confirmation', PaymentControllers.confirmationController);
+router.post('/advance-confirmation', PaymentControllers.confirmationController);
+router.post(
+  '/complete-confirmation',
+  PaymentControllers.confirmationController,
+);
 
 export const PaymentRoutes = router;
