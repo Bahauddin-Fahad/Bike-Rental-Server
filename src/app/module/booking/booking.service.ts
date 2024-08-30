@@ -215,7 +215,7 @@ const payTotalCostIntoDB = async (
 
     const paymentData = {
       transactionId,
-      amount: rentalInfo?.totalCost - 100,
+      amount: finalCost,
       paymentType: 'complete',
       customerName: userDetails!.name,
       customerEmail: userDetails!.email,
