@@ -30,7 +30,7 @@ const confirmationService = async (
     message = `Could not completed ${paymentType === 'advance' ? 'Booking' : 'Payment'}!`;
   }
 
-  const filePath = join(__dirname, '../../../views/confirmation.html');
+  const filePath = join(__dirname, '../../../../confirmation.html');
   let template = readFileSync(filePath, 'utf-8');
 
   template = template.replace('{{message}}', message);
