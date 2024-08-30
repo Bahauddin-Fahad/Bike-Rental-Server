@@ -17,6 +17,7 @@ const bookingSchema = new Schema(
     returnTime: { type: Date },
     totalCost: { type: Number, required: [true, 'Total Cost is Required'] },
     advancePaid: { type: Number },
+    discount: { type: Number, default: 0 },
     status: {
       type: String,
       enum: ['pending', 'booked', 'paid'],

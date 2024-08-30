@@ -9,7 +9,7 @@ export type TBooking = {
   returnTime: Date;
   totalCost: number;
   advancePaid: number;
+  discount: number;
   status: string;
   transactionIds: string[];
-  // transactionId: string;
 };

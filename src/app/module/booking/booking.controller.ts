@@ -43,7 +43,7 @@ const calculateTotalCost = catchAsync(async (req, res) => {
 });
 const payTotalCost = catchAsync(async (req, res) => {
   const id = req.params.id;
-  const result = await BookingServices.payTotalCostIntoDB(id);
+  const result = await BookingServices.payTotalCostIntoDB(id, req.body);
 
   sendResponse(res, {
     success: true,

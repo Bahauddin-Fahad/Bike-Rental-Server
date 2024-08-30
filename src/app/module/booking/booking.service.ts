@@ -64,6 +64,8 @@ const createRentalIntoDB = async (
       returnTime: null,
       totalCost: 0,
       advancePaid: 100,
+      discount: 0,
+
       status: 'pending',
       transactionIds: [transactionId],
     };
@@ -170,7 +172,10 @@ const calculateTotalCostIntoDB = async (
     throw new Error(err);
   }
 };
-const payTotalCostIntoDB = async (rentalId: string) => {
+const payTotalCostIntoDB = async (
+  rentalId: string,
+  payload: Partial<TBooking>,
+) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
@@ -189,16 +194,25 @@ const payTotalCostIntoDB = async (rentalId: string) => {
 
     const transactionId = `TXN-${Date.now()}`;
 
-    // updating the rental info
+    const totalCost = rentalInfo?.totalCost;
 
+    const finalCost = await calculateCost(totalCost, payload.discount!);
+
+    // updating the rental info
     const updatedRentalInfo = await ModelBooking.findByIdAndUpdate(
       rentalId,
-      { $push: { transactionIds: transactionId }, status: 'paid' },
+      {
+        $push: { transactionIds: transactionId },
+        status: 'paid',
+        discount: payload.discount,
+        totalCost: finalCost,
+      },
       { new: true },
     );
     if (!updatedRentalInfo) {
       throw new AppError(httpStatus.BAD_REQUEST, 'Failed to Pay');
     }
+
     const paymentData = {
       transactionId,
       amount: rentalInfo?.totalCost - 100,
@@ -271,4 +285,14 @@ export const BookingServices = {
   payTotalCostIntoDB,
   getMyRentalsFromDB,
   getALLRentalsFromDB,
+};
+
+const calculateCost = (originalCost: number, discountPercent: number) => {
+  if (discountPercent > 0) {
+    const discountAmount = (originalCost * discountPercent) / 100;
+    const finalPrice = originalCost - discountAmount;
+
+    return Math.round(finalPrice); // returns the final price rounded to 2 decimal places
+  }
+  return originalCost; // returns the original cost if no discount
 };
