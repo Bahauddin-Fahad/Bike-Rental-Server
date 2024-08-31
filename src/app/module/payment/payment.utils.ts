@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import axios from 'axios';
-import config from '../config';
+import config from '../../config';
 
 export const initiatePayment = async (paymentData: any) => {
   try {
@@ -9,8 +9,11 @@ export const initiatePayment = async (paymentData: any) => {
       store_id: config.store_id,
       signature_key: config.signature_key,
       tran_id: paymentData.transactionId,
-      success_url: `${config.base_url}/payments/${paymentData?.paymentType}-confirmation?transactionId=${paymentData.transactionId}&paymentType=${paymentData?.paymentType}&status=success`,
-      fail_url: `${config.base_url}/payments/${paymentData?.paymentType}-confirmation?paymentType=${paymentData?.paymentType}&status=failed`,
+
+      success_url: `${config.base_url}/payments/${paymentData?.paymentType}-confirmation?transactionId=${paymentData.transactionId}&rentalId=${paymentData?.rentalId}&paymentType=${paymentData?.paymentType}&status=success`,
+
+      fail_url: `${config.base_url}/payments/${paymentData?.paymentType}-confirmation?&rentalId=${paymentData?.rentalId}paymentType=${paymentData?.paymentType}&status=failed`,
+
       cancel_url: config.cancel_url,
       amount: paymentData.amount,
       currency: 'BDT',

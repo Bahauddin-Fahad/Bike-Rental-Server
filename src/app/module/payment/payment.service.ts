@@ -3,14 +3,13 @@
 /* eslint-disable no-undef */
 
 import { join } from 'path';
-
 import { readFileSync } from 'fs';
-import { ModelBooking } from '../booking/booking.model';
-import { verifyPayment } from '../../utils/payment';
+import { ModelRental } from '../rental/rental.model';
+import { verifyPayment } from './payment.utils';
 
 const confirmationService = async (
+  rentalId: string,
   transactionId: string,
-  status: string,
   paymentType: string,
 ) => {
   const verifyResponse = await verifyPayment(transactionId);
@@ -19,12 +18,11 @@ const confirmationService = async (
   let message = '';
 
   if (verifyResponse && verifyResponse.pay_status === 'Successful') {
-    result = await ModelBooking.findOneAndUpdate(
-      { transactionIds: { $in: [transactionId] } },
-      {
-        status: paymentType === 'advance' ? 'booked' : 'paid',
-      },
-    );
+    result = await ModelRental.findByIdAndUpdate(rentalId, {
+      advancePaid: 100,
+      $push: { transactionIds: transactionId },
+      status: paymentType === 'advance' ? 'booked' : 'paid',
+    });
     message = `Successfully ${paymentType === 'advance' ? 'Booked' : 'Paid'}!`;
   } else {
     message = `Could not completed ${paymentType === 'advance' ? 'Booking' : 'Payment'}!`;

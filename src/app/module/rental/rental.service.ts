@@ -1,19 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose';
 import { ModelUser } from '../user/user.model';
-import { TBooking } from './booking.interface';
-import { ModelBooking } from './booking.model';
+import { TRental } from './rental.interface';
+import { ModelRental } from './rental.model';
 import { ModelBike } from '../bike/bike.model';
 import httpStatus from 'http-status-codes';
 import AppError from '../../errors/AppError';
 import { JwtPayload } from 'jsonwebtoken';
-import { initiatePayment } from '../../utils/payment';
+
 import QueryBuilder from '../../builder/QueryBuilder';
 import { TUser } from '../user/user.interface';
+import { initiatePayment } from '../payment/payment.utils';
 
 const createRentalIntoDB = async (
   requestedUser: JwtPayload,
-  payload: Partial<TBooking>,
+  payload: Partial<TRental>,
 ) => {
   const session = await mongoose.startSession();
   try {
@@ -57,23 +58,29 @@ const createRentalIntoDB = async (
     const user = await ModelUser.findOne({ email: requestedUser.email });
     const transactionId = `TXN-${Date.now()}`;
 
-    const bookingData = {
+    const rentalData = {
       user: user?._id,
       bike: payload.bike,
       startTime: payload.startTime,
-      returnTime: null,
-      totalCost: 0,
-      advancePaid: 100,
-      discount: 0,
-
-      status: 'pending',
-      transactionIds: [transactionId],
     };
 
-    const bookedDetails = await ModelBooking.create(bookingData);
-    if (!bookedDetails) {
+    const rentalDetails = await ModelRental.create(rentalData);
+    if (!rentalDetails) {
       throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create the rental');
     }
+
+    const paymentData = {
+      transactionId,
+      amount: 100,
+      rentalId: rentalDetails?._id,
+      paymentType: 'advance',
+      customerName: user!.name,
+      customerEmail: user!.email,
+      customerPhone: user!.phone,
+      customerAddress: user!.address,
+    };
+
+    const paymentSession = await initiatePayment(paymentData);
 
     //updating the isAvailable value to false
     const updatedBikeDetails = await ModelBike.findByIdAndUpdate(
@@ -84,19 +91,6 @@ const createRentalIntoDB = async (
     if (!updatedBikeDetails) {
       throw new AppError(httpStatus.BAD_REQUEST, 'Bike Not Found');
     }
-
-    const paymentData = {
-      transactionId,
-      amount: 100,
-      paymentType: 'advance',
-      customerName: user!.name,
-      customerEmail: user!.email,
-      customerPhone: user!.phone,
-      customerAddress: user!.address,
-    };
-
-    const paymentSession = await initiatePayment(paymentData);
-
     await session.commitTransaction();
     await session.endSession();
 
@@ -110,13 +104,13 @@ const createRentalIntoDB = async (
 
 const calculateTotalCostIntoDB = async (
   id: string,
-  payload: Partial<TBooking>,
+  payload: Partial<TRental>,
 ) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
     //getting rental data
-    const rentalInfo = await ModelBooking.findById(id);
+    const rentalInfo = await ModelRental.findById(id);
 
     if (!rentalInfo) {
       throw new AppError(
@@ -124,12 +118,12 @@ const calculateTotalCostIntoDB = async (
         'No Rental Data found with this ID',
       );
     }
-    const bookingStartTime = rentalInfo?.startTime.getTime();
-    const bookingReturnTime = new Date(payload?.returnTime as Date).getTime();
+    const rentalStartTime = rentalInfo?.startTime.getTime();
+    const rentalReturnTime = new Date(payload?.returnTime as Date).getTime();
 
-    if (bookingStartTime) {
+    if (rentalStartTime) {
       //checking if the start time is greater than the current time
-      if (bookingStartTime > bookingReturnTime) {
+      if (rentalStartTime > rentalReturnTime) {
         throw new AppError(
           httpStatus.BAD_REQUEST,
           "Start time can't be larger than Return time",
@@ -137,7 +131,7 @@ const calculateTotalCostIntoDB = async (
       }
     }
 
-    // checking if the bike is available for rental and updating the availability
+    // checking if the bike is available and updating the availability
     const bikeDetails = await ModelBike.findByIdAndUpdate(
       rentalInfo.bike,
       { isAvailable: true },
@@ -149,14 +143,14 @@ const calculateTotalCostIntoDB = async (
 
     // calculating the rental cost
     const bikeRentalPrice = bikeDetails.pricePerHour;
-    const totalHour = (bookingReturnTime - bookingStartTime) / (1000 * 3600);
+    const totalHour = (rentalReturnTime - rentalStartTime) / (1000 * 3600);
     const totalRentalCost = Math.round(bikeRentalPrice * totalHour);
 
     // updating the rental info
-    const updatedRentalInfo = await ModelBooking.findByIdAndUpdate(
+    const updatedRentalInfo = await ModelRental.findByIdAndUpdate(
       id,
       {
-        returnTime: bookingReturnTime,
+        returnTime: rentalReturnTime,
         totalCost: totalRentalCost,
       },
       { new: true },
@@ -174,14 +168,14 @@ const calculateTotalCostIntoDB = async (
 };
 const payTotalCostIntoDB = async (
   rentalId: string,
-  payload: Partial<TBooking>,
+  payload: Partial<TRental>,
 ) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
 
     //getting rental data
-    const rentalInfo = await ModelBooking.findById(rentalId).populate('user');
+    const rentalInfo = await ModelRental.findById(rentalId).populate('user');
 
     if (!rentalInfo) {
       throw new AppError(
@@ -191,21 +185,16 @@ const payTotalCostIntoDB = async (
     }
 
     const userDetails = rentalInfo.user as TUser;
-
     const transactionId = `TXN-${Date.now()}`;
-
-    const totalCost = rentalInfo?.totalCost;
-
+    const totalCost = rentalInfo?.totalCost as number;
     const finalCost = await calculateCost(totalCost, payload.discount!);
 
     // updating the rental info
-    const updatedRentalInfo = await ModelBooking.findByIdAndUpdate(
+    const updatedRentalInfo = await ModelRental.findByIdAndUpdate(
       rentalId,
       {
-        $push: { transactionIds: transactionId },
-        status: 'paid',
         discount: payload.discount,
-        totalCost: finalCost,
+        costAfterDiscount: finalCost,
       },
       { new: true },
     );
@@ -215,7 +204,8 @@ const payTotalCostIntoDB = async (
 
     const paymentData = {
       transactionId,
-      amount: finalCost,
+      amount: finalCost - 100,
+      rentalId: updatedRentalInfo?._id,
       paymentType: 'complete',
       customerName: userDetails!.name,
       customerEmail: userDetails!.email,
@@ -239,7 +229,7 @@ const getMyRentalsFromDB = async (
   query: Record<string, unknown>,
 ) => {
   const rentalQuery = new QueryBuilder(
-    ModelBooking.find({
+    ModelRental.find({
       user: userId,
     })
       .populate(
@@ -260,7 +250,7 @@ const getMyRentalsFromDB = async (
 };
 const getALLRentalsFromDB = async (query: Record<string, unknown>) => {
   const rentalQuery = new QueryBuilder(
-    ModelBooking.find({})
+    ModelRental.find()
       .populate(
         'user',
         '-password -createdAt -updatedAt -address -phone -image -__v',
@@ -278,21 +268,20 @@ const getALLRentalsFromDB = async (query: Record<string, unknown>) => {
   return { meta, result };
 };
 
-export const BookingServices = {
-  createRentalIntoDB,
-  // returnBikeRentalIntoDB,
-  calculateTotalCostIntoDB,
-  payTotalCostIntoDB,
-  getMyRentalsFromDB,
-  getALLRentalsFromDB,
-};
-
 const calculateCost = (originalCost: number, discountPercent: number) => {
   if (discountPercent > 0) {
     const discountAmount = (originalCost * discountPercent) / 100;
     const finalPrice = originalCost - discountAmount;
 
-    return Math.round(finalPrice); // returns the final price rounded to 2 decimal places
+    return Math.round(finalPrice);
   }
-  return originalCost; // returns the original cost if no discount
+  return originalCost;
+};
+
+export const RentalServices = {
+  createRentalIntoDB,
+  calculateTotalCostIntoDB,
+  payTotalCostIntoDB,
+  getMyRentalsFromDB,
+  getALLRentalsFromDB,
 };

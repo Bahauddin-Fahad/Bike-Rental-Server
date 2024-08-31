@@ -1,7 +1,7 @@
 import { Schema, model } from 'mongoose';
-import { TBooking } from './booking.interface';
+import { TRental } from './rental.interface';
 
-const bookingSchema = new Schema(
+const rentalSchema = new Schema(
   {
     user: {
       type: Schema.Types.ObjectId,
@@ -14,25 +14,22 @@ const bookingSchema = new Schema(
       required: [true, 'Bike id is required'],
     },
     startTime: { type: Date, required: [true, 'Start Time is Required'] },
-    returnTime: { type: Date },
-    totalCost: { type: Number, required: [true, 'Total Cost is Required'] },
-    advancePaid: { type: Number },
-    discount: { type: Number, default: 0 },
+    returnTime: { type: Date, default: null },
+    advancePaid: { type: Number, default: null },
+    totalCost: { type: Number, default: null },
+    discount: { type: Number, default: null },
+    costAfterDiscount: { type: Number, default: null },
     status: {
       type: String,
       enum: ['pending', 'booked', 'paid'],
       default: 'pending',
     },
-    // transactionId: {
-    //   type: String,
-    //   default: '',
-    // },
     transactionIds: {
-      type: [String], // Array of strings for transaction IDs
+      type: [String],
       required: true,
     },
   },
   { timestamps: true, versionKey: false },
 );
 
-export const ModelBooking = model<TBooking>('Booking', bookingSchema);
+export const ModelRental = model<TRental>('Rental', rentalSchema);
